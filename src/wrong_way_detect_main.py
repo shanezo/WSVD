@@ -6,6 +6,8 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 from sort import * 
+import smtplib
+from email.mime.text import MIMEText
 
 # load yoloV8 model for detection
 detector = YOLO('../model/yolo8/yolov8n.pt')
@@ -15,7 +17,7 @@ number_plate_detetctor = YOLO('../model/yolo8/license_plate_detector.pt')
 tracker  = Sort()
 
 # if dont know the class id and name print it 
-# print(f'{detector.names}')
+#print(f'{detector.names}')
 
 # class indexes 
 vehicle_index = [2, 3, 5, 7]
@@ -34,7 +36,7 @@ os.makedirs(output_dir, exist_ok=True)
 def RGB(event, x, y, flags, param):
     if event == cv2.EVENT_MOUSEMOVE :  
         colorsBGR = [x, y]
-        print(colorsBGR)
+       # print(colorsBGR)
         
 
 cv2.namedWindow('RGB')
@@ -220,3 +222,45 @@ if write:
 cap.release()
 cv2.destroyAllWindows()
 print('Done :) ')
+
+# Placeholder function for generating and issuing challans
+def issue_challan(vehicle_id, license_plate):
+    # In a real system, you would look up registration details using the license plate
+    # Generate a unique challan ID
+    challan_id = f"CHALLAN_{datetime.now().strftime('%Y%m%d%H%M%S')}_{vehicle_id}"
+    # Placeholder for generating the content of the challan
+    challan_content = f"Challan issued for vehicle ID: {vehicle_id}, License Plate: {license_plate}, Date: {datetime.now()}"
+    # Save or send the challan, for now just print it
+    print("Challan Generated:")
+    print(challan_content)
+
+# Inside the loop where wrong-way vehicles are detected
+if state[id] < -20:
+    # Assuming you have the license plate information available
+    license_plate_info = get_license_plate_info(license_plate)
+    # Generate and issue a challan
+    issue_challan(id, license_plate_info)
+    print(id)
+# Add import
+
+
+# Define email function
+def send_email(subject, body):
+    sender = 'your_email@example.com'
+    recipient = 'recipient@example.com'
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = recipient
+
+    with smtplib.SMTP('smtp.example.com', 587) as server:
+        server.starttls()
+        server.login('your_email@example.com', 'your_password')
+        server.sendmail(sender, recipient, msg.as_string())
+
+# Inside the loop where wrong-way vehicles are detected
+if state[id] < -20 and count[id] > 10:
+    subject = f"Wrong Way Vehicle Detected - ID {id}"
+    body = f"Vehicle ID: {id}\nDetection Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nCoordinates: {x3, y3, x4, y4}"
+    send_email(subject, body)
+
